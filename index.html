@@ -9,516 +9,238 @@
     body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
     .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
     .header { background: linear-gradient(90deg, #1a5fb4, #007acc); color: white; padding: 20px; text-align: center; }
-    .header img { max-height: 60px; margin-bottom: 10px; }
+    .header img { max-height: 60px; margin-bottom: 10px; border-radius: 4px; }
     .header h1 { font-size: 1.8em; margin-bottom: 5px; }
     .section { padding: 20px; border-bottom: 1px solid #eee; }
     .section:last-child { border-bottom: none; }
-    .section h2 { color: #1a5fb4; margin-bottom: 15px; font-size: 1.3em; }
-    select, input, textarea { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; margin-bottom: 10px; }
-    .btn { background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; margin-right: 10px; }
+    .section h2 { color: #1a5fb4; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+    .btn { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1em; margin: 5px; }
     .btn:hover { background: #218838; }
+    .btn-secondary { background: #6c757d; }
     .btn-danger { background: #dc3545; }
-    .btn-danger:hover { background: #c82333; }
-    .btn-secondary { background: #6c757d; margin-top: 10px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-    th { background: #f8f9fa; font-weight: bold; }
-    .total { font-size: 1.4em; font-weight: bold; color: #1a5fb4; text-align: right; margin-top: 15px; }
-    .prof-tools { background: #fff3cd; border-left: 4px solid #ffc107; }
+    .btn-warning { background: #ffc107; color: #212529; }
+    input, textarea, select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; width: 100%; max-width: 400px; margin: 5px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f8f9fa; font-weight: 600; }
+    .total { font-size: 1.2em; font-weight: bold; background: #e8f5e8; padding: 15px; border-radius: 6px; }
     .import-zone { background: #d4edda; border-left: 4px solid #28a745; }
-    .logo-zone { border: 3px dashed #1a5fb4; padding: 20px; text-align: center; border-radius: 8px; margin: 15px 0; cursor: pointer; background: #f8f9ff; }
-    .logo-zone:hover { background: #e8f0ff; }
-    .logo-zone.dragover { background: #d4eaff; border-color: #007acc; }
-    @media (max-width: 768px) { .container { margin: 10px; border-radius: 8px; } .btn { width: 100%; margin: 5px 0; } }
+    @media print { body { background: white; padding: 0; } .no-print { display: none !important; } }
+    @media (max-width: 768px) { .container { margin: 0; border-radius: 0; } }
   </style>
 </head>
 <body>
+  <div class="container">
+    <!-- HEADER SOCIÉTÉ -->
+    <div class="header" id="headerSoc">
+      <img id="logoSoc" src="" alt="Logo" style="display: none;">
+      <h1 id="nomSoc">ÉLEC INSTALL SARL</h1>
+      <p id="adresseSoc">Chargement...</p>
+    </div>
 
-<div class="container">
+    <!-- PROJET & CLIENT -->
+    <div class="section">
+      <h2>📋 Projet & Client</h2>
+      <input type="text" id="projet" placeholder="ex: Installation électrique T2" value="Installation électrique studio T2">
+      <input type="text" id="client" placeholder="ex: M. Martin" value="M. Martin">
+    </div>
 
-  <!-- EN-TÊTE SOCIÉTÉ -->
-  <div class="header" id="header">
-    <img id="logo" src="https://via.placeholder.com/200x60/1a5fb4/ffffff?text=LOGO" alt="Logo">
-    <h1 id="entrepriseNom">ÉLEC INSTALL SARL</h1>
-    <p id="entrepriseInfo">12 rue des Circuits<br>94000 Créteil<br>SIRET : 123 456 789 00012 | Tél : 01 23 45 67 89</p>
-  </div>
+    <!-- IMPORT RS CSV -->
+    <div class="section import-zone">
+      <h2>📥 Importer liste Radiospares</h2>
+      <p>Crée ta liste sur <a href="https://fr.rs-online.com" target="_blank">RS</a> → Export CSV → Glisse ici</p>
+      <input type="file" id="fileCSV" accept=".csv" style="padding: 10px;">
+      <button class="btn" onclick="importerCSV()">🚀 Importer dans devis</button>
+      <button class="btn btn-danger" onclick="viderPanier()">🗑️ Vider panier</button>
+    </div>
 
-  <!-- PROJET & CLIENT -->
-  <div class="section">
-    <h2>📋 Projet & Client</h2>
-    <input type="text" id="projet" placeholder="Nom du projet (ex : Installation studio T2)" value="Installation studio T2">
-    <input type="text" id="client" placeholder="Nom client (ex : M. Martin)" value="M. Martin">
-  </div>
+    <!-- MAIN D'OEUVRE -->
+    <div class="section">
+      <h2>👷 Main d'œuvre</h2>
+      <label>Heures pose: <input type="number" id="heuresPose" step="0.25" value="4.0" min="0"></label>
+      <label>Taux HT (€/h): <input type="number" id="tauxHoraire" step="0.01" value="45.00" min="0"></label>
+    </div>
 
-  <!-- IMPORT LISTE RS -->
-  <div class="section import-zone">
-    <h2>📥 Importer liste Radiospares</h2>
-    <p><em>1. Crée liste sur <a href="https://fr.rs-online.com" target="_blank">fr.rs-online.com</a><br>2. Export CSV → Glisse ici !</em></p>
-    <input type="file" id="importCSV" accept=".csv" style="width: 100%; padding: 10px;">
-    <div id="importPreview" style="background: white; padding: 15px; border-radius: 6px; max-height: 200px; overflow-y: auto; display: none;"></div>
-    <button class="btn" onclick="importerListeRS()">🚀 Importer dans devis</button>
-  </div>
+    <!-- SOCIÉTÉ (CONFIG) -->
+    <div class="section">
+      <h2>🏢 Société</h2>
+      <input type="text" id="newNom" placeholder="Nom société">
+      <textarea id="newAdresse" rows="3" placeholder="Adresse&#10;12 rue des Circuits&#10;94000 Créteil"></textarea>
+      <label>Logo: <input type="file" id="newLogo" accept="image/*"></label>
+      <button class="btn" onclick="sauvegarderConfig()">💾 Sauvegarder</button>
+      <button class="btn btn-warning" onclick="reinitialiserApp()">🔄 Tout réinit</button>
+    </div>
 
-  <!-- MAIN D'OEUVRE -->
-  <div class="section">
-    <h2>⏱️ Main d'œuvre</h2>
-    <label>Heures estimées : 
-      <input type="number" id="heuresPose" value="4" min="0" step="0.5" style="width: 100px; display: inline;">
-    </label>
-    <div style="font-size: 18px; margin-top: 10px;">
-      <strong>Main d'œuvre :</strong> <span id="coutMainOeuvre">180,00</span> € HT
+    <!-- PANIER -->
+    <div class="section">
+      <h2>🛒 Panier matériel</h2>
+      <table id="tableauPanier">
+        <thead><tr><th>Réf RS</th><th>Description</th><th>Marque</th><th>Qté</th><th>PU HT €</th><th>Total</th><th>Supp</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- TOTAUX -->
+    <div class="section total" id="totaux">
+      Matériel HT: 0 € | MO: 0 € | <strong>TOTAL HT: 0 €</strong> | TVA 20%: 0 € | <strong>TTC: 0 €</strong>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="section">
+      <button class="btn" onclick="exporterCSV()">💾 Exporter CSV</button>
+      <button class="btn" onclick="imprimerFacture()" class="no-print">🖨️ Imprimer facture</button>
     </div>
   </div>
 
-  <!-- DEVIS FINAL -->
-  <div class="section">
-    <h2>💰 Devis complet</h2>
-    <table id="tableau">
-      <thead>
-        <tr><th>Article</th><th>Marque</th><th>Qté</th><th>Prix U. HT</th><th>Total</th></tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-    <div class="total">
-      Matériel HT : <span id="sousTotalMat">0,00</span> €<br>
-      Main d'œuvre : <span id="sousTotalMO">0,00</span> €<br>
-      <strong>SOUS-TOTAL HT : <span id="sousTotal">0,00</span> €</strong><br>
-      TVA 20,00% : <span id="tva">0,00</span> €<br>
-      <strong>TOTAL TTC : <span id="totalTTC">0,00</span> €</strong>
-    </div>
-    <button class="btn" onclick="imprimerFacture()">🖨️ Imprimer Facture PDF</button>
-    <button class="btn btn-secondary" onclick="exporterCSV()">📊 Liste Matériel CSV</button>
-    <button class="btn btn-danger" onclick="viderPanier()">🗑️ Vider panier</button>
-  </div>
+  <script>
+    // ÉTAT GLOBAL
+    let panier = JSON.parse(localStorage.getItem('panierMELEC')) || [];
+    let config = JSON.parse(localStorage.getItem('configEntreprise')) || {
+      nom: 'ÉLEC INSTALL SARL', adresse: '12 rue des Circuits\n94000 Créteil', tauxHoraire: 45.00, logo: ''
+    };
 
-  <!-- CONFIG SOCIÉTÉ + LOGO UPLOAD -->
-  <div class="section prof-tools">
-    <h2>🏢 Configuration Société</h2>
-    
-    <input type="text" id="newEntreprise" placeholder="Nom société (ex : ÉLEC INSTALL SARL)">
-    
-    <textarea id="newAdresse" rows="3" placeholder="Adresse complète&#10;12 rue des Circuits&#10;94000 Créteil&#10;SIRET : 12345678900012 | Tél : 01 23 45 67 89"></textarea>
-    
-    <div class="logo-zone" onclick="document.getElementById('logoFile').click()">
-      <p>🖼️ <strong>Glisser votre LOGO ici</strong> ou cliquer</p>
-      <p style="font-size: 12px; color: #666;">PNG/JPG/PDF - max 1 Mo</p>
-      <img id="logoPreview" src="https://via.placeholder.com/200x60/1a5fb4/ffffff?text=LOGO+PNG" style="max-height: 60px; margin-top: 10px; border-radius: 4px; border: 2px solid #ddd;">
-    </div>
-    <input type="file" id="logoFile" accept="image/*" style="display: none;">
-    
-    <label>Taux horaire HT : 
-      <input type="number" id="tauxHoraire" step="0.01" value="45.00" style="width: 120px;">
-    </label>
-    
-    <button class="btn" onclick="sauvegarderConfig()">💾 Sauvegarder tout</button>
-    <button class="btn btn-secondary" onclick="resetConfig()">🔄 Réinitialiser</button>
-  </div>
-
-</div>
-
-<script>
-// ÉTAT APPLICATION
-let panier = JSON.parse(localStorage.getItem('panierMELEC')) || [];
-let config = JSON.parse(localStorage.getItem('configEntreprise')) || {
-  nom: 'ÉLEC INSTALL SARL',
-  adresse: '12 rue des Circuits\n94000 Créteil\nSIRET : 12345678900012 | Tél : 01 23 45 67 89',
-  logo: '',
-  tauxHoraire: 45.00
-};
-
-// PARSER CSV ROBUSTE (tous formats RS)
-function parserCSV(csvText) {
-  if (!csvText) return [];
-  
-  // Détecter séparateur et nettoyer
-  const sep = csvText.includes(';') ? ';' : ',';
-  const lignes = csvText.split('\n').map(l => l.trim()).filter(l => l);
-  
-  const items = [];
-  
-  lignes.slice(1).forEach((ligne, idx) => { // Skip header
-    try {
-      // Split intelligent (gère guillemets/spaces)
-      const cols = ligne.split(new RegExp(`(?=(?:[^"]*"[^"]*")*[^"]*$)(${sep})`, 'g'))
-        .map(c => c.replace(/^["\s]+|["\s]+$/g, '').trim())
-        .filter(c => c);
-      
-      if (cols.length < 9) return; // Ligne invalide
-      
-      // Mapping colonnes RS standard (ajusté dynamique)
-      const refRS = cols[0] || '';      // Col 1: RS Stock No
-      const desc = cols[5] || cols[6] || ''; // Col 6/7: Description
-      const marque = cols[7] || '';     // Col 8: Manufacturer
-      let prixStr = cols[8] || '0';     // Col 9: Unit Price
-      
-      // Nettoyer prix (FR: virgule → point, supprimer €/HT/spaces)
-      prixStr = prixStr.replace(/[€\sHT]+/gi, '').replace(',', '.');
-      const puHT = parseFloat(prixStr) || 0;
-      
-      if (!refRS || puHT <= 0) return;
-      
-      // Vérif doublon par réf
-      if (items.some(item => item.ref === refRS)) return;
-      
-      items.push({
-        ref: refRS,
-        desc: desc,
-        marque: marque,
-        qte: 1,
-        puHT: puHT
+    // PARSER CSV RS ROBUSTE
+    function parserCSV(csvText) {
+      if (!csvText) return [];
+      const sep = csvText.includes(';') ? ';' : ',';
+      const lignes = csvText.split('\n').map(l => l.trim()).filter(l => l);
+      const items = [];
+      lignes.slice(1).forEach((ligne, idx) => {
+        try {
+          const cols = ligne.split(new RegExp(`(?=(?:[^"]*"[^"]*")*[^"]*$)(${sep})`, 'g'))
+            .map(c => c.replace(/^["\s]+|["\s]+$/g, '').trim()).filter(c => c);
+          if (cols.length < 9) return;
+          const refRS = cols[0] || '';
+          const desc = cols[5] || cols[6] || '';
+          const marque = cols[7] || '';
+          let prixStr = cols[8] || '0';
+          prixStr = prixStr.replace(/[€\sHT]+/gi, '').replace(',', '.');
+          const puHT = parseFloat(prixStr) || 0;
+          if (!refRS || puHT <= 0 || items.some(item => item.ref === refRS)) return;
+          items.push({ ref: refRS, desc, marque, qte: 1, puHT });
+        } catch (e) { console.warn(`Ligne ${idx + 2} ignorée`); }
       });
-      
-    } catch (e) {
-      console.warn(`Ligne ${idx + 2} ignorée:`, ligne);
+      return items;
     }
-  });
-  
-  return items;
-}
 
-
-// PRÉVISUALISATION CSV
-document.getElementById('importCSV').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  const reader = new FileReader();
-  reader.onload = function(event) {
-    const csv = event.target.result;
-    const items = parserCSV(csv);
-    
-    const preview = document.getElementById('importPreview');
-    preview.innerHTML = '<strong>Articles détectés (' + items.length + ') :</strong><br>';
-    items.slice(0, 10).forEach((item, i) => {
-      preview.innerHTML += `${i + 1}. ${item.ref} - ${item.desc} (${item.puHT.toFixed(2)}€) <br>`;
-    });
-    if (items.length > 10) preview.innerHTML += `<em>... et ${items.length - 10} autres</em>`;
-    preview.style.display = 'block';
-  };
-  reader.readAsText(file);
-});
-
-// IMPORTER LISTE RS
-function importerListeRS() {
-  const file = document.getElementById('importCSV').files[0];
-  if (!file) {
-    alert('Sélectionne un fichier CSV');
-    return;
-  }
-  
-  const reader = new FileReader();
-  reader.onload = function(event) {
-    const csv = event.target.result;
-    const items = parserCSV(csv);
-    
-    if (items.length === 0) {
-      alert('Aucun article détecté - Vérifie format CSV');
-      return;
+    // IMPORT CSV
+    function importerCSV() {
+      const file = document.getElementById('fileCSV').files[0];
+      if (!file) return alert('Choisis un CSV RS !');
+      const reader = new FileReader();
+      reader.onload = e => {
+        panier = [...panier, ...parserCSV(e.target.result)];
+        localStorage.setItem('panierMELEC', JSON.stringify(panier));
+        mettreAJourTableau();
+      };
+      reader.readAsText(file);
     }
-    
-    panier = panier.concat(items);
-    localStorage.setItem('panierMELEC', JSON.stringify(panier));
+
+    // TABLEAU PANIER
+    function mettreAJourTableau() {
+      const tbody = document.querySelector('#tableauPanier tbody');
+      tbody.innerHTML = '';
+      panier.forEach((item, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.ref}</td>
+          <td>${item.desc}</td>
+          <td>${item.marque}</td>
+          <td><input type="number" value="${item.qte}" min="1" onchange="panier[${i}].qte=this.valueAsNumber; localStorage.setItem('panierMELEC',JSON.stringify(panier)); mettreAJourTableau(); mettreAJourTotaux();" style="width:60px;"></td>
+          <td>${item.puHT.toFixed(2)} €</td>
+          <td>${(item.qte * item.puHT).toFixed(2)} €</td>
+          <td><button class="btn btn-danger" onclick="panier.splice(${i},1); localStorage.setItem('panierMELEC',JSON.stringify(panier)); mettreAJourTableau(); mettreAJourTotaux();">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      mettreAJourTotaux();
+    }
+
+    // TOTAUX
+    function mettreAJourTotaux() {
+      const materielHT = panier.reduce((sum, item) => sum + (item.qte * item.puHT), 0);
+      const heures = parseFloat(document.getElementById('heuresPose').value) || 0;
+      const taux = parseFloat(document.getElementById('tauxHoraire').value) || 0;
+      const moHT = heures * taux;
+      const totalHT = materielHT + moHT;
+      const tva = totalHT * 0.20;
+      const ttc = totalHT + tva;
+      document.getElementById('totaux').innerHTML = `
+        Matériel HT: ${materielHT.toFixed(2)} € | MO: ${moHT.toFixed(2)} € | 
+        <strong>TOTAL HT: ${totalHT.toFixed(2)} €</strong> | TVA 20%: ${tva.toFixed(2)} € | 
+        <strong>TTC: ${ttc.toFixed(2)} €</strong>
+      `;
+    }
+
+    // VIDANGE / RÉINIT
+    function viderPanier() {
+      if (confirm('Vider panier ?')) {
+        panier = [];
+        localStorage.removeItem('panierMELEC');
+        mettreAJourTableau();
+      }
+    }
+    function reinitialiserApp() {
+      if (confirm('Réinitialiser tout ?')) {
+        panier = []; localStorage.removeItem('panierMELEC');
+        localStorage.removeItem('configEntreprise');
+        location.reload();
+      }
+    }
+
+    // CONFIG SOCIÉTÉ
+    function majHeader() {
+      document.getElementById('nomSoc').textContent = config.nom;
+      document.getElementById('adresseSoc').textContent = config.adresse;
+      const logo = document.getElementById('logoSoc');
+      if (config.logo) {
+        logo.src = config.logo;
+        logo.style.display = 'block';
+      } else logo.style.display = 'none';
+    }
+    function sauvegarderConfig() {
+      config.nom = document.getElementById('newNom').value || config.nom;
+      config.adresse = document.getElementById('newAdresse').value || config.adresse;
+      config.tauxHoraire = parseFloat(document.getElementById('tauxHoraire').value) || 45;
+      const logoFile = document.getElementById('newLogo').files[0];
+      if (logoFile) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          config.logo = e.target.result;
+          localStorage.setItem('configEntreprise', JSON.stringify(config));
+          majHeader();
+        };
+        reader.readAsDataURL(logoFile);
+      } else {
+        localStorage.setItem('configEntreprise', JSON.stringify(config));
+        majHeader();
+      }
+      document.getElementById('newNom').value = '';
+      document.getElementById('newAdresse').value = '';
+    }
+
+    // EXPORT / IMPRESSION
+    function exporterCSV() {
+      const csv = ['Ref,Desc,Marque,Qté,PU HT,Total',
+        ...panier.map(item => `${item.ref},"${item.desc}",${item.marque},${item.qte},${item.puHT},${item.qte*item.puHT}`)].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'devis_melec.csv'; a.click(); URL.revokeObjectURL(url);
+    }
+    function imprimerFacture() { window.print(); }
+
+    // ÉVÉNEMENTS
+    document.getElementById('fileCSV').addEventListener('change', importerCSV);
+    document.getElementById('heuresPose').addEventListener('input', mettreAJourTotaux);
+    document.getElementById('tauxHoraire').addEventListener('input', mettreAJourTotaux);
+
+    // INIT
+    document.getElementById('newNom').value = config.nom;
+    document.getElementById('newAdresse').value = config.adresse;
+    document.getElementById('tauxHoraire').value = config.tauxHoraire;
+    majHeader();
     mettreAJourTableau();
-    document.getElementById('importPreview').style.display = 'none';
-    document.getElementById('importCSV').value = '';
-    
-    alert(items.length + ' articles importés !');
-  };
-  reader.readAsText(file);
-}
-
-// MISE À JOUR TABLEAU
-function mettreAJourTableau() {
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
-  
-  panier.forEach((item, index) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${item.ref}<br><small>${item.desc}</small></td>
-      <td>${item.marque}</td>
-      <td><input type="number" value="${item.qte}" min="1" onchange="changerQte(${index}, this.value)" style="width: 60px;"></td>
-      <td>${item.puHT.toFixed(2)}</td>
-      <td>${(item.qte * item.puHT).toFixed(2)} <button onclick="supprimerItem(${index})" style="background:#dc3545;color:white;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;">✕</button></td>
-    `;
-    tbody.appendChild(row);
-  });
-  
-  calculerTotaux();
-}
-
-// CHANGER QTÉ
-function changerQte(index, val) {
-  panier[index].qte = parseInt(val) || 1;
-  localStorage.setItem('panierMELEC', JSON.stringify(panier));
-  mettreAJourTableau();
-}
-
-// SUPPRIMER ITEM
-function supprimerItem(index) {
-  if (confirm('Supprimer cet article ?')) {
-    panier.splice(index, 1);
-    localStorage.setItem('panierMELEC', JSON.stringify(panier));
-    mettreAJourTableau();
-  }
-}
-
-// CALCULER TOTAUX
-function calculerTotaux() {
-  const totalMat = panier.reduce((sum, item) => sum + (item.qte * item.puHT), 0);
-  const heures = parseFloat(document.getElementById('heuresPose').value) || 0;
-  const tauxHoraire = config.tauxHoraire;
-  const totalMO = heures * tauxHoraire;
-  const sousTotal = totalMat + totalMO;
-  const tva = sousTotal * 0.20;
-  const totalTTC = sousTotal + tva;
-  
-  document.getElementById('sousTotalMat').textContent = totalMat.toFixed(2).replace('.', ',');
-  document.getElementById('sousTotalMO').textContent = totalMO.toFixed(2).replace('.', ',');
-  document.getElementById('coutMainOeuvre').textContent = totalMO.toFixed(2).replace('.', ',');
-  document.getElementById('sousTotal').textContent = sousTotal.toFixed(2).replace('.', ',');
-  document.getElementById('tva').textContent = tva.toFixed(2).replace('.', ',');
-  document.getElementById('totalTTC').textContent = totalTTC.toFixed(2).replace('.', ',');
-}
-
-// MISE À JOUR HEURES POSE
-document.getElementById('heuresPose').addEventListener('input', calculerTotaux);
-
-// SAUVEGARDER CONFIG
-function sauvegarderConfig() {
-  const newEntreprise = document.getElementById('newEntreprise').value.trim();
-  const newAdresse = document.getElementById('newAdresse').value.trim();
-  const newTauxHoraire = parseFloat(document.getElementById('tauxHoraire').value) || 45.00;
-  
-  if (!newEntreprise) {
-    alert('Nom société requis');
-    return;
-  }
-  
-  config.nom = newEntreprise;
-  config.adresse = newAdresse;
-  config.tauxHoraire = newTauxHoraire;
-  
-  localStorage.setItem('configEntreprise', JSON.stringify(config));
-  appliquerConfig();
-  calculerTotaux();
-  
-  alert('Configuration sauvegardée !');
-}
-
-// APPLIQUER CONFIG
-function appliquerConfig() {
-  document.getElementById('entrepriseNom').textContent = config.nom;
-  document.getElementById('newEntreprise').value = config.nom;
-  
-  const infoHTML = config.adresse.replace(/\n/g, '<br>');
-  document.getElementById('entrepriseInfo').innerHTML = infoHTML;
-  document.getElementById('newAdresse').value = config.adresse;
-  
-  document.getElementById('tauxHoraire').value = config.tauxHoraire;
-  
-  if (config.logo) {
-    document.getElementById('logo').src = config.logo;
-    document.getElementById('logoPreview').src = config.logo;
-  }
-}
-
-// RESET CONFIG
-function resetConfig() {
-  if (confirm('Réinitialiser configuration par défaut ?')) {
-    localStorage.removeItem('configEntreprise');
-    config = {
-      nom: 'ÉLEC INSTALL SARL',
-      adresse: '12 rue des Circuits\n94000 Créteil\nSIRET : 12345678900012 | Tél : 01 23 45 67 89',
-      logo: '',
-      tauxHoraire: 45.00
-    };
-    appliquerConfig();
-    calculerTotaux();
-  }
-}
-
-// UPLOAD LOGO
-document.getElementById('logoFile').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  if (file.size > 1024 * 1024) {
-    alert('Logo trop grand (max 1 Mo)');
-    return;
-  }
-  
-  const reader = new FileReader();
-  reader.onload = function(event) {
-    const logoData = event.target.result;
-    document.getElementById('logoPreview').src = logoData;
-    document.getElementById('logo').src = logoData;
-  };
-  reader.readAsDataURL(file);
-});
-
-// DRAG & DROP LOGO
-const logoZone = document.querySelector('.logo-zone');
-logoZone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  logoZone.classList.add('dragover');
-});
-logoZone.addEventListener('dragleave', () => {
-  logoZone.classList.remove('dragover');
-});
-logoZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  logoZone.classList.remove('dragover');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) {
-    if (file.size > 1024 * 1024) {
-      alert('Logo trop grand (max 1 Mo)');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = function(event) {
-      const logoData = event.target.result;
-      document.getElementById('logoPreview').src = logoData;
-      document.getElementById('logo').src = logoData;
-    };
-    reader.readAsDataURL(file);
-  }
-});
-
-// EXPORTER CSV
-function exporterCSV() {
-  if (panier.length === 0) {
-    alert('Panier vide');
-    return;
-  }
-  
-  let csv = 'Référence;Description;Marque;Qté;Prix U. HT;Total\n';
-  panier.forEach(item => {
-    csv += `${item.ref};${item.desc};${item.marque};${item.qte};${item.puHT.toFixed(2)};${(item.qte * item.puHT).toFixed(2)}\n`;
-  });
-  
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `devis_melec_${Date.now()}.csv`;
-  a.click();
-  
-  URL.revokeObjectURL(url);
-}
-
-// IMPRIMER FACTURE PDF
-function imprimerFacture() {
-  if (panier.length === 0 && parseFloat(document.getElementById('heuresPose').value) === 0) {
-    alert('Devis vide');
-    return;
-  }
-  
-  const totalMat = panier.reduce((sum, item) => sum + (item.qte * item.puHT), 0);
-  const heures = parseFloat(document.getElementById('heuresPose').value) || 0;
-  const tauxHoraire = config.tauxHoraire;
-  const totalMO = heures * tauxHoraire;
-  const sousTotal = totalMat + totalMO;
-  const tva = sousTotal * 0.20;
-  const totalTTC = sousTotal + tva;
-  
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(`
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Devis - ${document.getElementById('projet').value}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
-    .header { border-bottom: 2px solid #1a5fb4; padding: 15px 0; margin-bottom: 20px; }
-    .header img { max-height: 50px; }
-    .header h1 { color: #1a5fb4; margin-top: 10px; }
-    .row { display: flex; justify-content: space-between; margin-bottom: 15px; }
-    .col { width: 48%; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-    th { background: #f8f9fa; border-bottom: 2px solid #1a5fb4; }
-    .total { text-align: right; margin-top: 20px; }
-    .total-line { margin: 5px 0; }
-    .grand-total { font-size: 16px; font-weight: bold; color: #1a5fb4; border-top: 2px solid #1a5fb4; padding-top: 10px; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <img src="${document.getElementById('logo').src}"/>
-    <h1>${config.nom}</h1>
-    <p>${config.adresse.replace(/\n/g, '<br>')}</p>
-  </div>
-  
-  <div class="row">
-    <div class="col">
-      <strong>Devis :</strong> N° ${Date.now()}<br>
-      <strong>Date :</strong> ${new Date().toLocaleDateString('fr-FR')}<br>
-    </div>
-    <div class="col" style="text-align: right;">
-      <strong>Projet :</strong> ${document.getElementById('projet').value}<br>
-      <strong>Client :</strong> ${document.getElementById('client').value}<br>
-    </div>
-  </div>
-  
-  <h3>Détail des prestations</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Référence</th>
-        <th>Description</th>
-        <th>Marque</th>
-        <th>Qté</th>
-        <th>Prix U. HT</th>
-        <th>Total HT</th>
-      </tr>
-    </thead>
-    <tbody>
-  `);
-  
-  panier.forEach(item => {
-    printWindow.document.write(`
-      <tr>
-        <td>${item.ref}</td>
-        <td>${item.desc}</td>
-        <td>${item.marque}</td>
-        <td>${item.qte}</td>
-        <td>${item.puHT.toFixed(2)}€</td>
-        <td>${(item.qte * item.puHT).toFixed(2)}€</td>
-      </tr>
-    `);
-  });
-  
-  printWindow.document.write(`
-    </tbody>
-  </table>
-  
-  <div class="total">
-    <div class="total-line">Matériel HT : ${totalMat.toFixed(2).replace('.', ',')}€</div>
-    <div class="total-line">Main d'œuvre (${heures}h) : ${totalMO.toFixed(2).replace('.', ',')}€</div>
-    <div class="total-line">SOUS-TOTAL HT : ${sousTotal.toFixed(2).replace('.', ',')}€</div>
-    <div class="total-line">TVA 20,00% : ${tva.toFixed(2).replace('.', ',')}€</div>
-    <div class="grand-total">TOTAL TTC : ${totalTTC.toFixed(2).replace('.', ',')}€</div>
-  </div>
-  
-  <p style="margin-top: 40px; color: #666; font-size: 10px;">Devis généré par Devis MELEC - RS Components</p>
-</body>
-</html>
-  `);
-  
-  printWindow.document.close();
-  printWindow.print();
-}
-
-// INIT
-window.onload = function() {
-  appliquerConfig();
-  mettreAJourTableau();
-};
-
-</script>
-
+  </script>
 </body>
 </html>
