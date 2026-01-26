@@ -127,38 +127,52 @@ let config = JSON.parse(localStorage.getItem('configEntreprise')) || {
 };
 
 // PARSER CSV ROBUSTE (tous formats RS)
-function parserCSV(csv) {
-  const lignes = csv.split('\n').slice(1); // on saute l’en-tête
+function parserCSV(csvText) {
+  if (!csvText) return [];
+  
+  // Détecter séparateur et nettoyer
+  const sep = csvText.includes(';') ? ';' : ',';
+  const lignes = csvText.split('\n').map(l => l.trim()).filter(l => l);
+  
   const items = [];
-
-  lignes.forEach(ligne => {
-    if (!ligne.trim()) return;
-
-    // Séparateur CSV de RS : virgule
-    let cols = ligne.split(',').map(c => c.trim());
-
-    // On enlève les guillemets autour des champs
-    cols = cols.map(c => c.replace(/^"(.*)"$/, '$1'));
-
-    // On vérifie qu’on a au moins 10 colonnes (format RS)
-    if (cols.length < 10) return;
-
-    const ref = cols[0];                  // "RS Stock No"
-    const desc = cols[5];                 // "Description"
-    const marque = cols[7];               // "Manufacturer name"
-    const prix = parseFloat(cols[8]);     // "Unit Price"
-
-    if (ref && !isNaN(prix)) {
+  
+  lignes.slice(1).forEach((ligne, idx) => { // Skip header
+    try {
+      // Split intelligent (gère guillemets/spaces)
+      const cols = ligne.split(new RegExp(`(?=(?:[^"]*"[^"]*")*[^"]*$)(${sep})`, 'g'))
+        .map(c => c.replace(/^["\s]+|["\s]+$/g, '').trim())
+        .filter(c => c);
+      
+      if (cols.length < 9) return; // Ligne invalide
+      
+      // Mapping colonnes RS standard (ajusté dynamique)
+      const refRS = cols[0] || '';      // Col 1: RS Stock No
+      const desc = cols[5] || cols[6] || ''; // Col 6/7: Description
+      const marque = cols[7] || '';     // Col 8: Manufacturer
+      let prixStr = cols[8] || '0';     // Col 9: Unit Price
+      
+      // Nettoyer prix (FR: virgule → point, supprimer €/HT/spaces)
+      prixStr = prixStr.replace(/[€\sHT]+/gi, '').replace(',', '.');
+      const puHT = parseFloat(prixStr) || 0;
+      
+      if (!refRS || puHT <= 0) return;
+      
+      // Vérif doublon par réf
+      if (items.some(item => item.ref === refRS)) return;
+      
       items.push({
-        ref,
-        desc,
-        marque,
+        ref: refRS,
+        desc: desc,
+        marque: marque,
         qte: 1,
-        puHT: prix
+        puHT: puHT
       });
+      
+    } catch (e) {
+      console.warn(`Ligne ${idx + 2} ignorée:`, ligne);
     }
   });
-
+  
   return items;
 }
 
