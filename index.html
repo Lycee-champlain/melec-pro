@@ -1187,29 +1187,43 @@
 
         function resetAll() {
             if (confirm('⚠️ Êtes-vous sûr de vouloir recommencer une nouvelle facture ? Toutes les données actuelles seront perdues.')) {
-                // Réinitialiser tous les champs
-                document.getElementById('prenom').value = '';
-                document.getElementById('nom').value = '';
-                document.getElementById('tauxHoraire').value = '';
-                document.getElementById('heuresMO').value = '';
-                document.getElementById('tvaMO').value = '';
-                document.getElementById('tvaMateriel').value = '';
-                
-                // Réinitialiser l'entreprise sélectionnée
-                selectedCompany = null;
-                document.querySelectorAll('.company-card').forEach(el => {
-                    el.classList.remove('selected');
-                });
-                
-                // Réinitialiser la liste de matériaux
-                materials = [];
-                renderMaterialList();
-                
-                // Retourner à l'étape 1
-                goToStep(1);
-                
-                // Message de confirmation
-                showAlert('✅ Nouvelle facture ! Recommencez depuis le début.', 'success');
+                try {
+                    // Réinitialiser tous les champs
+                    document.getElementById('prenom').value = '';
+                    document.getElementById('nom').value = '';
+                    document.getElementById('tauxHoraire').value = '';
+                    document.getElementById('heuresMO').value = '';
+                    document.getElementById('tvaMO').value = '';
+                    document.getElementById('tvaMateriel').value = '';
+                    
+                    // Vider les alertes
+                    document.getElementById('alert-container').innerHTML = '';
+                    
+                    // Réinitialiser l'entreprise sélectionnée
+                    selectedCompany = null;
+                    document.querySelectorAll('.company-card').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    
+                    // Réinitialiser la liste de matériaux
+                    materials = [];
+                    renderMaterialList();
+                    
+                    // Réinitialiser l'étape active
+                    currentStep = 1;
+                    
+                    // Retourner à l'étape 1
+                    goToStep(1);
+                    
+                    // Scroll vers le haut
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    // Message de confirmation
+                    showAlert('✅ Nouvelle facture ! Vous pouvez recommencer.', 'success');
+                } catch (error) {
+                    console.error('Erreur lors de la réinitialisation:', error);
+                    alert('Erreur lors de la réinitialisation. Veuillez recharger la page.');
+                }
             }
         }
 
