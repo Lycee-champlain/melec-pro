@@ -59,20 +59,6 @@
     <button class="btn" onclick="importerListeRS()">🚀 Importer dans devis</button>
   </div>
 
-  <!-- AJOUT MANUEL 
-  <div class="section">
-    <h2>➕ Ajout manuel</h2>
-    <select id="ref">
-      <option value="">Sélectionner matériel...</option>
-      <option value="schneider-acti9-16a" data-prix="8.50" data-marque="Schneider">Acti9 iC60N 16A C (8.50€)</option>
-      <option value="legrand-dx3-16a" data-prix="9.20" data-marque="Legrand">DX³ 16A C (9.20€)</option>
-      <option value="schneider-diff-40a" data-prix="45.00" data-marque="Schneider">Acti9 40A 30mA (45.00€)</option>
-    </select>
-    <div style="display: flex; gap: 10px; align-items: end;">
-      <input type="number" id="qteManuel" value="1" min="1" style="width: 80px;">
-      <button class="btn" onclick="ajouterManuel()">➕ Ajouter</button>
-    </div>
-  </div>-->
   <!-- MAIN D'OEUVRE -->
   <div class="section">
     <h2>⏱️ Main d'œuvre</h2>
@@ -133,6 +119,393 @@
 <script>
 // ÉTAT APPLICATION
 let panier = JSON.parse(localStorage.getItem('panierMELEC')) || [];
-let config = JSON.parse(localStorage.getElementById('configEntreprise')) || {
+let config = JSON.parse(localStorage.getItem('configEntreprise')) || {
   nom: 'ÉLEC INSTALL SARL',
-  adresse: '12 rue des Circuits\n94000 Créteil
+  adresse: '12 rue des Circuits\n94000 Créteil\nSIRET : 12345678900012 | Tél : 01 23 45 67 89',
+  logo: '',
+  tauxHoraire: 45.00
+};
+
+// PARSER CSV ROBUSTE (tous formats RS)
+function parserCSV(csv) {
+  const lignes = csv.split('\n').slice(1);
+  const items = [];
+  
+  lignes.forEach(ligne => {
+    if (!ligne.trim()) return;
+    
+    // Détection automatique séparateur (; ou ,)
+    const sep = ligne.includes(';') ? ';' : ',';
+    const cols = ligne.split(sep).map(c => c.trim().replace(/"/g, ''));
+    
+    // Mapping intelligent colonnes RS (formats variables)
+    let ref = '', desc = '', marque = '', prix = 0;
+    
+    // Format 1: Ref;Description;Marque;Prix
+    if (cols.length >= 4) {
+      ref = cols[0];
+      desc = cols[1];
+      marque = cols[2];
+      prix = parseFloat(cols[3].replace(',', '.')) || 0;
+    }
+    // Format 2: Ref;Description;Prix;(pas marque)
+    else if (cols.length >= 3) {
+      ref = cols[0];
+      desc = cols[1];
+      marque = 'RS';
+      prix = parseFloat(cols[2].replace(',', '.')) || 0;
+    }
+    
+    if (ref && prix > 0) {
+      items.push({ ref, desc, marque, qte: 1, puHT: prix });
+    }
+  });
+  
+  return items;
+}
+
+// PRÉVISUALISATION CSV
+document.getElementById('importCSV').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const csv = event.target.result;
+    const items = parserCSV(csv);
+    
+    const preview = document.getElementById('importPreview');
+    preview.innerHTML = '<strong>Articles détectés (' + items.length + ') :</strong><br>';
+    items.slice(0, 10).forEach((item, i) => {
+      preview.innerHTML += `${i + 1}. ${item.ref} - ${item.desc} (${item.puHT.toFixed(2)}€) <br>`;
+    });
+    if (items.length > 10) preview.innerHTML += `<em>... et ${items.length - 10} autres</em>`;
+    preview.style.display = 'block';
+  };
+  reader.readAsText(file);
+});
+
+// IMPORTER LISTE RS
+function importerListeRS() {
+  const file = document.getElementById('importCSV').files[0];
+  if (!file) {
+    alert('Sélectionne un fichier CSV');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const csv = event.target.result;
+    const items = parserCSV(csv);
+    
+    if (items.length === 0) {
+      alert('Aucun article détecté - Vérifie format CSV');
+      return;
+    }
+    
+    panier = panier.concat(items);
+    localStorage.setItem('panierMELEC', JSON.stringify(panier));
+    mettreAJourTableau();
+    document.getElementById('importPreview').style.display = 'none';
+    document.getElementById('importCSV').value = '';
+    
+    alert(items.length + ' articles importés !');
+  };
+  reader.readAsText(file);
+}
+
+// MISE À JOUR TABLEAU
+function mettreAJourTableau() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  
+  panier.forEach((item, index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.ref}<br><small>${item.desc}</small></td>
+      <td>${item.marque}</td>
+      <td><input type="number" value="${item.qte}" min="1" onchange="changerQte(${index}, this.value)" style="width: 60px;"></td>
+      <td>${item.puHT.toFixed(2)}</td>
+      <td>${(item.qte * item.puHT).toFixed(2)} <button onclick="supprimerItem(${index})" style="background:#dc3545;color:white;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;">✕</button></td>
+    `;
+    tbody.appendChild(row);
+  });
+  
+  calculerTotaux();
+}
+
+// CHANGER QTÉ
+function changerQte(index, val) {
+  panier[index].qte = parseInt(val) || 1;
+  localStorage.setItem('panierMELEC', JSON.stringify(panier));
+  mettreAJourTableau();
+}
+
+// SUPPRIMER ITEM
+function supprimerItem(index) {
+  if (confirm('Supprimer cet article ?')) {
+    panier.splice(index, 1);
+    localStorage.setItem('panierMELEC', JSON.stringify(panier));
+    mettreAJourTableau();
+  }
+}
+
+// CALCULER TOTAUX
+function calculerTotaux() {
+  const totalMat = panier.reduce((sum, item) => sum + (item.qte * item.puHT), 0);
+  const heures = parseFloat(document.getElementById('heuresPose').value) || 0;
+  const tauxHoraire = config.tauxHoraire;
+  const totalMO = heures * tauxHoraire;
+  const sousTotal = totalMat + totalMO;
+  const tva = sousTotal * 0.20;
+  const totalTTC = sousTotal + tva;
+  
+  document.getElementById('sousTotalMat').textContent = totalMat.toFixed(2).replace('.', ',');
+  document.getElementById('sousTotalMO').textContent = totalMO.toFixed(2).replace('.', ',');
+  document.getElementById('coutMainOeuvre').textContent = totalMO.toFixed(2).replace('.', ',');
+  document.getElementById('sousTotal').textContent = sousTotal.toFixed(2).replace('.', ',');
+  document.getElementById('tva').textContent = tva.toFixed(2).replace('.', ',');
+  document.getElementById('totalTTC').textContent = totalTTC.toFixed(2).replace('.', ',');
+}
+
+// MISE À JOUR HEURES POSE
+document.getElementById('heuresPose').addEventListener('input', calculerTotaux);
+
+// SAUVEGARDER CONFIG
+function sauvegarderConfig() {
+  const newEntreprise = document.getElementById('newEntreprise').value.trim();
+  const newAdresse = document.getElementById('newAdresse').value.trim();
+  const newTauxHoraire = parseFloat(document.getElementById('tauxHoraire').value) || 45.00;
+  
+  if (!newEntreprise) {
+    alert('Nom société requis');
+    return;
+  }
+  
+  config.nom = newEntreprise;
+  config.adresse = newAdresse;
+  config.tauxHoraire = newTauxHoraire;
+  
+  localStorage.setItem('configEntreprise', JSON.stringify(config));
+  appliquerConfig();
+  calculerTotaux();
+  
+  alert('Configuration sauvegardée !');
+}
+
+// APPLIQUER CONFIG
+function appliquerConfig() {
+  document.getElementById('entrepriseNom').textContent = config.nom;
+  document.getElementById('newEntreprise').value = config.nom;
+  
+  const infoHTML = config.adresse.replace(/\n/g, '<br>');
+  document.getElementById('entrepriseInfo').innerHTML = infoHTML;
+  document.getElementById('newAdresse').value = config.adresse;
+  
+  document.getElementById('tauxHoraire').value = config.tauxHoraire;
+  
+  if (config.logo) {
+    document.getElementById('logo').src = config.logo;
+    document.getElementById('logoPreview').src = config.logo;
+  }
+}
+
+// RESET CONFIG
+function resetConfig() {
+  if (confirm('Réinitialiser configuration par défaut ?')) {
+    localStorage.removeItem('configEntreprise');
+    config = {
+      nom: 'ÉLEC INSTALL SARL',
+      adresse: '12 rue des Circuits\n94000 Créteil\nSIRET : 12345678900012 | Tél : 01 23 45 67 89',
+      logo: '',
+      tauxHoraire: 45.00
+    };
+    appliquerConfig();
+    calculerTotaux();
+  }
+}
+
+// UPLOAD LOGO
+document.getElementById('logoFile').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  if (file.size > 1024 * 1024) {
+    alert('Logo trop grand (max 1 Mo)');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const logoData = event.target.result;
+    document.getElementById('logoPreview').src = logoData;
+    document.getElementById('logo').src = logoData;
+  };
+  reader.readAsDataURL(file);
+});
+
+// DRAG & DROP LOGO
+const logoZone = document.querySelector('.logo-zone');
+logoZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  logoZone.classList.add('dragover');
+});
+logoZone.addEventListener('dragleave', () => {
+  logoZone.classList.remove('dragover');
+});
+logoZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  logoZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    if (file.size > 1024 * 1024) {
+      alert('Logo trop grand (max 1 Mo)');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const logoData = event.target.result;
+      document.getElementById('logoPreview').src = logoData;
+      document.getElementById('logo').src = logoData;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// EXPORTER CSV
+function exporterCSV() {
+  if (panier.length === 0) {
+    alert('Panier vide');
+    return;
+  }
+  
+  let csv = 'Référence;Description;Marque;Qté;Prix U. HT;Total\n';
+  panier.forEach(item => {
+    csv += `${item.ref};${item.desc};${item.marque};${item.qte};${item.puHT.toFixed(2)};${(item.qte * item.puHT).toFixed(2)}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `devis_melec_${Date.now()}.csv`;
+  a.click();
+  
+  URL.revokeObjectURL(url);
+}
+
+// IMPRIMER FACTURE PDF
+function imprimerFacture() {
+  if (panier.length === 0 && parseFloat(document.getElementById('heuresPose').value) === 0) {
+    alert('Devis vide');
+    return;
+  }
+  
+  const totalMat = panier.reduce((sum, item) => sum + (item.qte * item.puHT), 0);
+  const heures = parseFloat(document.getElementById('heuresPose').value) || 0;
+  const tauxHoraire = config.tauxHoraire;
+  const totalMO = heures * tauxHoraire;
+  const sousTotal = totalMat + totalMO;
+  const tva = sousTotal * 0.20;
+  const totalTTC = sousTotal + tva;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Devis - ${document.getElementById('projet').value}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
+    .header { border-bottom: 2px solid #1a5fb4; padding: 15px 0; margin-bottom: 20px; }
+    .header img { max-height: 50px; }
+    .header h1 { color: #1a5fb4; margin-top: 10px; }
+    .row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+    .col { width: 48%; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #f8f9fa; border-bottom: 2px solid #1a5fb4; }
+    .total { text-align: right; margin-top: 20px; }
+    .total-line { margin: 5px 0; }
+    .grand-total { font-size: 16px; font-weight: bold; color: #1a5fb4; border-top: 2px solid #1a5fb4; padding-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="${document.getElementById('logo').src}"/>
+    <h1>${config.nom}</h1>
+    <p>${config.adresse.replace(/\n/g, '<br>')}</p>
+  </div>
+  
+  <div class="row">
+    <div class="col">
+      <strong>Devis :</strong> N° ${Date.now()}<br>
+      <strong>Date :</strong> ${new Date().toLocaleDateString('fr-FR')}<br>
+    </div>
+    <div class="col" style="text-align: right;">
+      <strong>Projet :</strong> ${document.getElementById('projet').value}<br>
+      <strong>Client :</strong> ${document.getElementById('client').value}<br>
+    </div>
+  </div>
+  
+  <h3>Détail des prestations</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Référence</th>
+        <th>Description</th>
+        <th>Marque</th>
+        <th>Qté</th>
+        <th>Prix U. HT</th>
+        <th>Total HT</th>
+      </tr>
+    </thead>
+    <tbody>
+  `);
+  
+  panier.forEach(item => {
+    printWindow.document.write(`
+      <tr>
+        <td>${item.ref}</td>
+        <td>${item.desc}</td>
+        <td>${item.marque}</td>
+        <td>${item.qte}</td>
+        <td>${item.puHT.toFixed(2)}€</td>
+        <td>${(item.qte * item.puHT).toFixed(2)}€</td>
+      </tr>
+    `);
+  });
+  
+  printWindow.document.write(`
+    </tbody>
+  </table>
+  
+  <div class="total">
+    <div class="total-line">Matériel HT : ${totalMat.toFixed(2).replace('.', ',')}€</div>
+    <div class="total-line">Main d'œuvre (${heures}h) : ${totalMO.toFixed(2).replace('.', ',')}€</div>
+    <div class="total-line">SOUS-TOTAL HT : ${sousTotal.toFixed(2).replace('.', ',')}€</div>
+    <div class="total-line">TVA 20,00% : ${tva.toFixed(2).replace('.', ',')}€</div>
+    <div class="grand-total">TOTAL TTC : ${totalTTC.toFixed(2).replace('.', ',')}€</div>
+  </div>
+  
+  <p style="margin-top: 40px; color: #666; font-size: 10px;">Devis généré par Devis MELEC - RS Components</p>
+</body>
+</html>
+  `);
+  
+  printWindow.document.close();
+  printWindow.print();
+}
+
+// INIT
+window.onload = function() {
+  appliquerConfig();
+  mettreAJourTableau();
+};
+
+</script>
+
+</body>
+</html>
