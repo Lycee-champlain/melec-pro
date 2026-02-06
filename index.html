@@ -3,137 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MELEC PRO | Suivi Collaboratif</title>
-    <!-- Firebase SDK -->
+    <title>MELEC PRO | Suivi & Examen</title>
+    
+    <!-- Firebase SDK (Version Compat pour HTML simple) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --card: #fff; --text: #1e293b; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        :root { --primary: #2563eb; --bg: #f1f5f9; --card: #fff; --text: #0f172a; --success: #10b981; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; }
         
-        /* LOGIN SCREEN */
-        #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; }
-        .login-box { background: white; padding: 40px; border-radius: 12px; color: var(--text); width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .login-box h1 { margin-top: 0; color: var(--primary); }
-        select, input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 6px; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; }
-        .btn-main:hover { background: #1d4ed8; }
+        /* LOGIN */
+        #loginScreen { display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+        .login-box { background: white; padding: 40px; border-radius: 12px; width: 400px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .login-title { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { font-size: 0.8rem; font-weight: bold; color: #64748b; margin-bottom: 5px; display: block; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; margin-top: 10px; }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(37,99,235,0.3); }
 
-        /* APP LAYOUT */
+        /* APP */
         #appScreen { display: none; height: 100%; }
-        aside { width: 250px; background: #0f172a; color: white; padding: 20px; display: flex; flex-direction: column; }
-        main { flex: 1; padding: 20px; overflow-y: auto; }
+        aside { width: 260px; background: #0f172a; color: white; padding: 20px; display: flex; flex-direction: column; }
+        main { flex: 1; padding: 30px; overflow-y: auto; }
         
-        .nav-item { padding: 12px; margin: 5px 0; cursor: pointer; border-radius: 6px; color: #94a3b8; }
-        .nav-item:hover, .nav-item.active { background: var(--primary); color: white; }
+        .nav-section { font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: bold; margin: 20px 0 10px 0; }
+        .nav-item { padding: 12px; margin: 2px 0; cursor: pointer; border-radius: 6px; color: #cbd5e1; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .nav-item:hover { background: #1e293b; color: white; }
+        .nav-item.active { background: var(--primary); color: white; }
         
-        /* CARDS */
-        .card { background: var(--card); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .card { background: var(--card); padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        h2 { margin-top: 0; color: var(--primary); border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
         
-        /* PROJETS PROF */
-        .proj-card { border-left: 5px solid var(--primary); cursor: pointer; transition: 0.2s; }
-        .proj-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        
-        /* TIMELINE ELEVE */
-        .timeline-item { border-left: 2px solid #e2e8f0; padding-left: 20px; margin-left: 10px; padding-bottom: 20px; position: relative; }
-        .timeline-item::before { content: ''; width: 12px; height: 12px; background: var(--primary); border-radius: 50%; position: absolute; left: -7px; top: 0; }
+        /* ORAL MODULE */
+        .oral-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .checklist-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #f1f5f9; }
         
         .hidden { display: none !important; }
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; background: #e0f2fe; color: #0369a1; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <!-- ECRAN DE CONNEXION (Point d'entrée MonLycée.net) -->
+    <!-- 1. LOGIN SCREEN -->
     <div id="loginScreen">
         <div class="login-box">
-            <h1>⚡ MELEC PRO</h1>
-            <p>Accès via MonLycée.net</p>
+            <div class="login-title">⚡ MELEC PRO <span id="yearDisplay" style="font-size:0.8rem; background:#eff6ff; color:#2563eb; padding:2px 6px; border-radius:4px;"></span></div>
             
             <div id="eleveLogin">
-                <select id="loginClasse">
-                    <option value="">-- Choisir ma Classe --</option>
-                    <option value="T_MELEC_A">Terminale MELEC A</option>
-                    <option value="T_MELEC_B">Terminale MELEC B</option>
-                    <option value="1_MELEC">Première MELEC</option>
-                </select>
-                <input type="text" id="loginGroupe" placeholder="Nom de mon Groupe (ex: Stade)">
-                <button class="btn-main" onclick="app.loginEleve()">Entrer (Élève)</button>
-                <p style="margin-top:20px; font-size:0.8rem; color:#64748b; cursor:pointer; text-decoration:underline;" onclick="ui.showProfLogin()">Accès Enseignant</p>
+                <div class="input-group">
+                    <label>ANNÉE SCOLAIRE</label>
+                    <select id="loginAnnee"></select>
+                </div>
+                <div class="input-group">
+                    <label>NIVEAU / CLASSE</label>
+                    <select id="loginClasse">
+                        <option value="1MELEC">Première (1MELEC)</option>
+                        <option value="TMELEC">Terminale (TMELEC)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>NOM DU GROUPE PROJET</label>
+                    <input type="text" id="loginGroupe" placeholder="Ex: Domotique_EHPAD">
+                </div>
+                <button class="btn-main" onclick="app.loginEleve()">Accéder au Projet</button>
+                <div style="margin-top:20px; font-size:0.8rem; color:#64748b; cursor:pointer; text-decoration:underline;" onclick="ui.toggleProf()">Accès Enseignant</div>
             </div>
 
             <div id="profLogin" class="hidden">
-                <input type="password" id="profPass" placeholder="Code Enseignant">
-                <button class="btn-main" style="background:#0f172a;" onclick="app.loginProf()">Connexion Prof</button>
-                <p style="margin-top:20px; font-size:0.8rem; color:#64748b; cursor:pointer;" onclick="ui.showEleveLogin()">Retour Élève</p>
+                <div class="input-group">
+                    <label>CODE PIN ENSEIGNANT</label>
+                    <input type="password" id="profPass">
+                </div>
+                <button class="btn-main" style="background:#0f172a;" onclick="app.loginProf()">Connexion Supervision</button>
+                <div style="margin-top:20px; font-size:0.8rem; color:#64748b; cursor:pointer;" onclick="ui.toggleProf()">Retour Élève</div>
             </div>
         </div>
     </div>
 
-    <!-- ECRAN APPLICATION -->
+    <!-- 2. APPLICATION SCREEN -->
     <div id="appScreen">
         <aside>
-            <div style="font-weight:bold; font-size:1.2rem; margin-bottom:30px;">⚡ MELEC PRO</div>
-            <div id="userInfo" style="font-size:0.8rem; color:#94a3b8; margin-bottom:20px; border-bottom:1px solid #334155; padding-bottom:10px;"></div>
-            
-            <!-- Menu Élève -->
+            <div style="font-weight:800; font-size:1.4rem; color:#60a5fa;">MELEC PRO</div>
+            <div id="userBadge" style="font-size:0.8rem; margin-top:5px; color:#94a3b8;"></div>
+
+            <!-- MENU ÉLÈVE -->
             <div id="menuEleve" class="hidden">
-                <div class="nav-item active" onclick="ui.nav('dashboard')">🏠 Mon Projet</div>
-                <div class="nav-item" onclick="ui.nav('journal')">📝 Journal de Chantier</div>
-                <div class="nav-item" onclick="ui.nav('doc')">📄 Documents BAC</div>
+                <div class="nav-section">Projet</div>
+                <div class="nav-item active" onclick="ui.nav('dashboard')">🏠 Tableau de Bord</div>
+                <div class="nav-item" onclick="ui.nav('journal')">📝 Journal / Tâches</div>
+                
+                <!-- Visible uniquement pour TMELEC -->
+                <div id="menuOral" class="hidden">
+                    <div class="nav-section" style="color:#f43f5e;">Examen Final</div>
+                    <div class="nav-item" style="color:#fca5a5;" onclick="ui.nav('oral')">🎓 Prépa Oral E32</div>
+                </div>
             </div>
 
-            <!-- Menu Prof -->
+            <!-- MENU PROF -->
             <div id="menuProf" class="hidden">
-                <div class="nav-item active" onclick="ui.nav('profDash')">🎓 Supervision Globale</div>
-                <div class="nav-item" onclick="ui.nav('profArchive')">🗄️ Archives Années</div>
+                <div class="nav-section">Supervision</div>
+                <div class="nav-item active" onclick="ui.nav('profDash')">👀 Suivi des Groupes</div>
+                <div class="nav-item" onclick="ui.nav('profEval')">✅ Évaluation</div>
             </div>
-            
+
             <div style="flex:1;"></div>
-            <div class="nav-item" onclick="location.reload()" style="color:#ef4444;">🚪 Déconnexion</div>
+            <div class="nav-item" onclick="location.reload()" style="color:#ef4444;">🚪 Quitter</div>
         </aside>
 
         <main>
-            <!-- VUE ELEVE : DASHBOARD -->
+            <!-- VUE DASHBOARD (Commun) -->
             <div id="view-dashboard" class="hidden">
                 <div class="card">
-                    <h2>📍 Avancement du Projet <span id="projTitleDisplay" class="badge"></span></h2>
-                    <textarea id="projDesc" style="width:100%; height:100px; padding:10px; border:1px solid #e2e8f0; border-radius:6px;" placeholder="Description technique du projet..." onblur="app.saveProjet()"></textarea>
-                    <div style="margin-top:10px; text-align:right;">
-                        <span id="saveStatus" style="color:#10b981; font-size:0.8rem;"></span>
-                    </div>
+                    <h2 id="projTitle">Mon Projet</h2>
+                    <p style="color:#64748b; font-style:italic;">Description technique du système...</p>
+                    <textarea id="projDesc" style="width:100%; height:100px; margin-top:10px;" placeholder="Décrivez le système ici..." onblur="app.saveData('description', this.value)"></textarea>
+                    <p id="saveMsg" style="color:#10b981; font-size:0.8rem; margin-top:5px; height:15px;"></p>
+                </div>
+                
+                <!-- Journal rapide -->
+                <div class="card">
+                    <h3>Activités Récentes</h3>
+                    <div id="quickJournal" style="font-size:0.9rem; color:#64748b;"></div>
                 </div>
             </div>
 
-            <!-- VUE ELEVE : JOURNAL (Prépa Oral) -->
+            <!-- VUE JOURNAL (Tâches) -->
             <div id="view-journal" class="hidden">
-                <div class="card">
-                    <div style="display:flex; justify-content:space-between;">
-                        <h2>📝 Journal de Chantier</h2>
-                        <button class="btn-main" style="width:auto;" onclick="app.addJournalEntry()">+ Nouvelle Entrée</button>
+                 <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>Journal de Chantier</h2>
+                        <button style="padding:8px 15px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="app.addJournal()">+ Ajouter Activité</button>
                     </div>
-                    <div id="journalList" style="margin-top:20px;"></div>
+                    <div id="fullJournal" style="margin-top:20px;"></div>
+                 </div>
+            </div>
+
+            <!-- VUE ORAL E32 (Spécial Terminale) -->
+            <div id="view-oral" class="hidden">
+                <div class="card" style="border-left:5px solid #f43f5e;">
+                    <h2 style="color:#f43f5e;">🎓 Préparation Épreuve E32 (Oral)</h2>
+                    <p>Cochez les éléments prêts pour votre dossier technique final.</p>
+                    
+                    <div class="oral-grid">
+                        <div>
+                            <h3>📂 Dossier Technique</h3>
+                            <div class="checklist-item"><input type="checkbox" id="c1" onchange="app.saveCheck('c1')"> 1. Présentation du système (CCTP)</div>
+                            <div class="checklist-item"><input type="checkbox" id="c2" onchange="app.saveCheck('c2')"> 2. Schémas électriques finaux</div>
+                            <div class="checklist-item"><input type="checkbox" id="c3" onchange="app.saveCheck('c3')"> 3. Liste du matériel (Devis)</div>
+                            <div class="checklist-item"><input type="checkbox" id="c4" onchange="app.saveCheck('c4')"> 4. Configuration / Paramétrage</div>
+                        </div>
+                        <div>
+                            <h3>🗣️ Soutenance Orale</h3>
+                            <div class="checklist-item"><input type="checkbox" id="c5" onchange="app.saveCheck('c5')"> 5. Diaporama (PowerPoint)</div>
+                            <div class="checklist-item"><input type="checkbox" id="c6" onchange="app.saveCheck('c6')"> 6. Démonstration fonctionnelle</div>
+                            <div class="checklist-item"><input type="checkbox" id="c7" onchange="app.saveCheck('c7')"> 7. Bilan (Difficultés / Solutions)</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:20px;">
+                        <label>Notes pour l'oral (Mots-clés, plan...)</label>
+                        <textarea id="oralNotes" style="width:100%; height:150px; padding:10px; margin-top:5px; border:1px solid #cbd5e1; border-radius:6px;" onblur="app.saveData('oralNotes', this.value)"></textarea>
+                    </div>
                 </div>
             </div>
 
-            <!-- VUE PROF : SUPERVISION -->
+            <!-- VUE PROF (Liste) -->
             <div id="view-profDash" class="hidden">
-                <h2>🎓 Tableau de Bord Enseignant</h2>
+                <h2>Supervision Globale</h2>
                 <div class="card">
-                    <select id="filterClasse" onchange="app.loadAllProjects()" style="width:200px;">
-                        <option value="all">Toutes les classes</option>
-                        <option value="T_MELEC_A">T_MELEC_A</option>
-                        <option value="T_MELEC_B">T_MELEC_B</option>
-                    </select>
+                    <label>Filtrer par Année :</label>
+                    <select id="profFilterAnnee" onchange="app.loadProfView()"></select>
                 </div>
-                <div id="profProjectGrid" class="grid"></div>
+                <div id="profGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px,1fr)); gap:20px;"></div>
+            </div>
+            
+            <div id="view-profEval" class="hidden">
+                <div class="card">
+                    <h2>Évaluation (À venir)</h2>
+                    <p>Ce module permettra de noter les compétences C1 à C5.</p>
+                </div>
             </div>
         </main>
     </div>
 
     <script>
-        // --- 1. CONFIGURATION FIREBASE (REMPLACER ICI !) ---
+        // --- CONFIG FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyCtsJQl2jwVds3Txa-nZ9xBdyyY8MCJ3cs",
             authDomain: "melec-suivi-projets.firebaseapp.com",
@@ -142,28 +197,47 @@
             messagingSenderId: "140759755218",
             appId: "1:140759755218:web:184fc7e3087a8e6ae3800b"
         };
-        // Initialisation
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // --- 2. LOGIQUE APP ---
-        const PROF_CODE = "1234"; // Code prof simple
-        let currentUser = { role: null, classe: null, groupe: null, id: null };
+        // --- GESTION ANNEES SCOLAIRES ---
+        function getSchoolYears() {
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = today.getMonth(); // 0-11
+            const startYear = m < 7 ? y - 1 : y; 
+            const current = `${startYear}-${startYear + 1}`;
+            const next = `${startYear + 1}-${startYear + 2}`;
+            return [current, next];
+        }
+
+        // --- INIT LOGIN ---
+        const years = getSchoolYears();
+        const selAnnee = document.getElementById('loginAnnee');
+        years.forEach(y => {
+            const op = document.createElement('option');
+            op.value = y; op.text = y + (y===years[0] ? " (En cours)" : " (Prochaine)");
+            selAnnee.add(op);
+        });
+        document.getElementById('yearDisplay').innerText = years[0];
+
+        // --- LOGIQUE APP ---
+        let user = {};
 
         const app = {
             loginEleve: async () => {
-                const classe = document.getElementById('loginClasse').value;
-                const groupe = document.getElementById('loginGroupe').value.trim();
-                if(!classe || !groupe) return alert("Veuillez tout remplir");
+                const annee = document.getElementById('loginAnnee').value;
+                const classe = document.getElementById('loginClasse').value; // 1MELEC ou TMELEC
+                const groupe = document.getElementById('loginGroupe').value.replace(/[^a-z0-9]/gi, '_').toUpperCase();
 
-                // ID unique du projet (ex: 2026_T_MELEC_A_Stade)
-                const annee = "2025-2026"; 
-                const projId = `${annee}_${classe}_${groupe}`.replace(/[^a-z0-9_]/gi, '');
+                if(!groupe) return alert("Nom du groupe requis !");
 
-                currentUser = { role: 'eleve', classe, groupe, id: projId, annee };
-                
-                // Vérifier si projet existe, sinon créer
-                const docRef = db.collection('Projets').doc(projId);
+                // ID Unique : ANNEE_CLASSE_GROUPE
+                const id = `${annee}_${classe}_${groupe}`;
+                user = { role:'eleve', id, annee, classe, groupe };
+
+                // Création auto si inexistant
+                const docRef = db.collection('Projets').doc(id);
                 const doc = await docRef.get();
                 if(!doc.exists) {
                     await docRef.set({
@@ -171,79 +245,102 @@
                         classe: classe,
                         annee: annee,
                         description: "",
-                        created: new Date(),
-                        journal: []
+                        journal: [],
+                        oralChecklist: {},
+                        oralNotes: "",
+                        created: new Date()
                     });
                 }
                 
-                ui.initApp('eleve');
-                app.loadProjet();
+                ui.init();
+                app.loadData();
             },
 
             loginProf: () => {
-                const pass = document.getElementById('profPass').value;
-                if(pass === PROF_CODE) {
-                    currentUser = { role: 'prof' };
-                    ui.initApp('prof');
-                    app.loadAllProjects();
-                } else {
-                    alert("Code incorrect");
+                if(document.getElementById('profPass').value === "1234") {
+                    user = { role:'prof' };
+                    // Filtre Année Prof
+                    const pf = document.getElementById('profFilterAnnee');
+                    pf.innerHTML = '';
+                    years.forEach(y => {
+                        const op = document.createElement('option');
+                        op.value = y; op.text = y;
+                        pf.add(op);
+                    });
+                    ui.init();
+                    app.loadProfView();
+                } else alert("Code Erreur");
+            },
+
+            // --- DATA ---
+            loadData: async () => {
+                const doc = await db.collection('Projets').doc(user.id).get();
+                const d = doc.data();
+                
+                document.getElementById('projTitle').innerText = `${d.titre} (${d.classe})`;
+                document.getElementById('projDesc').value = d.description || "";
+                
+                // Journal
+                app.renderJournal(d.journal || []);
+                
+                // Si Terminale
+                if(user.classe === 'TMELEC') {
+                    document.getElementById('oralNotes').value = d.oralNotes || "";
+                    const checks = d.oralChecklist || {};
+                    for(const [k, v] of Object.entries(checks)) {
+                        if(document.getElementById(k)) document.getElementById(k).checked = v;
+                    }
                 }
             },
 
-            // --- ÉLÈVE : Charger son projet ---
-            loadProjet: async () => {
-                const doc = await db.collection('Projets').doc(currentUser.id).get();
-                const data = doc.data();
-                document.getElementById('projTitleDisplay').innerText = data.titre;
-                document.getElementById('projDesc').value = data.description || "";
-                app.renderJournal(data.journal || []);
+            saveData: (field, val) => {
+                db.collection('Projets').doc(user.id).update({ [field]: val });
+                document.getElementById('saveMsg').innerText = "Sauvegardé...";
+                setTimeout(()=>document.getElementById('saveMsg').innerText="", 1500);
+            },
+            
+            saveCheck: (id) => {
+                const val = document.getElementById(id).checked;
+                db.collection('Projets').doc(user.id).update({ [`oralChecklist.${id}`]: val });
             },
 
-            saveProjet: async () => {
-                const desc = document.getElementById('projDesc').value;
-                await db.collection('Projets').doc(currentUser.id).update({ description: desc });
-                document.getElementById('saveStatus').innerText = "Sauvegardé !";
-                setTimeout(() => document.getElementById('saveStatus').innerText = "", 2000);
-            },
-
-            addJournalEntry: async () => {
-                const txt = prompt("Activité du jour :");
+            addJournal: async () => {
+                const txt = prompt("Description de l'activité :");
                 if(!txt) return;
                 const entry = { date: new Date().toISOString(), text: txt };
-                
-                // Ajout Firebase (arrayUnion)
-                await db.collection('Projets').doc(currentUser.id).update({
+                await db.collection('Projets').doc(user.id).update({
                     journal: firebase.firestore.FieldValue.arrayUnion(entry)
                 });
-                app.loadProjet(); // Recharger
+                app.loadData(); // Reload
             },
 
-            renderJournal: (entries) => {
-                const div = document.getElementById('journalList');
-                div.innerHTML = entries.reverse().map(e => `
-                    <div class="timeline-item">
-                        <small style="color:#64748b">${new Date(e.date).toLocaleDateString()}</small>
+            renderJournal: (list) => {
+                // Reverse pour avoir le plus récent en haut
+                const html = list.reverse().map(e => `
+                    <div style="border-left:2px solid #2563eb; padding-left:15px; margin-bottom:15px;">
+                        <div style="font-size:0.75rem; color:#64748b;">${new Date(e.date).toLocaleDateString()}</div>
                         <div>${e.text}</div>
                     </div>
                 `).join('');
+                document.getElementById('quickJournal').innerHTML = html || "Aucune activité.";
+                document.getElementById('fullJournal').innerHTML = html || "Aucune activité.";
             },
 
-            // --- PROF : Charger TOUS les projets ---
-            loadAllProjects: async () => {
-                const filter = document.getElementById('filterClasse').value;
-                let query = db.collection('Projets').where('annee', '==', '2025-2026');
-                if(filter !== 'all') query = query.where('classe', '==', filter);
-
-                const snapshot = await query.get();
-                const grid = document.getElementById('profProjectGrid');
-                grid.innerHTML = snapshot.docs.map(doc => {
+            // --- PROF VIEW ---
+            loadProfView: async () => {
+                const annee = document.getElementById('profFilterAnnee').value;
+                const snap = await db.collection('Projets').where('annee', '==', annee).get();
+                
+                const grid = document.getElementById('profGrid');
+                grid.innerHTML = snap.empty ? "Aucun projet." : snap.docs.map(doc => {
                     const d = doc.data();
+                    const isTerm = d.classe === 'TMELEC';
                     return `
-                        <div class="card proj-card" onclick="alert('Détails de ${d.titre} à implémenter !')">
+                        <div class="card" style="border-left:5px solid ${isTerm ? '#f43f5e' : '#2563eb'}; cursor:pointer;">
                             <h3>${d.titre}</h3>
-                            <span class="badge">${d.classe}</span>
-                            <p style="font-size:0.8rem; color:#64748b; margin-top:10px;">${d.description.substring(0,50)}...</p>
+                            <span style="background:${isTerm ? '#fee2e2' : '#dbeafe'}; color:${isTerm ? '#991b1b' : '#1e40af'}; padding:3px 8px; border-radius:10px; font-size:0.7rem; font-weight:bold;">${d.classe}</span>
+                            <p style="font-size:0.8rem; margin-top:10px;">${d.description ? d.description.substring(0,60)+'...' : 'Pas de description'}</p>
+                            <div style="font-size:0.7rem; color:#64748b; margin-top:5px;">${(d.journal||[]).length} entrées journal</div>
                         </div>
                     `;
                 }).join('');
@@ -251,27 +348,34 @@
         };
 
         const ui = {
-            showProfLogin: () => { document.getElementById('eleveLogin').classList.add('hidden'); document.getElementById('profLogin').classList.remove('hidden'); },
-            showEleveLogin: () => { document.getElementById('profLogin').classList.add('hidden'); document.getElementById('eleveLogin').classList.remove('hidden'); },
+            toggleProf: () => {
+                const p = document.getElementById('profLogin');
+                const e = document.getElementById('eleveLogin');
+                if(p.classList.contains('hidden')) { p.classList.remove('hidden'); e.classList.add('hidden'); }
+                else { p.classList.add('hidden'); e.classList.remove('hidden'); }
+            },
             
-            initApp: (role) => {
+            init: () => {
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('appScreen').style.display = 'flex';
                 
-                if(role === 'eleve') {
+                if(user.role === 'eleve') {
                     document.getElementById('menuEleve').classList.remove('hidden');
-                    document.getElementById('userInfo').innerText = `Élève | ${currentUser.classe} | ${currentUser.groupe}`;
+                    document.getElementById('userBadge').innerText = `${user.annee} | ${user.classe}`;
+                    if(user.classe === 'TMELEC') document.getElementById('menuOral').classList.remove('hidden');
                     ui.nav('dashboard');
                 } else {
                     document.getElementById('menuProf').classList.remove('hidden');
-                    document.getElementById('userInfo').innerText = `Enseignant | Supervision`;
+                    document.getElementById('userBadge').innerText = "Enseignant";
                     ui.nav('profDash');
                 }
             },
 
-            nav: (view) => {
-                document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
-                document.getElementById('view-'+view).classList.remove('hidden');
+            nav: (v) => {
+                document.querySelectorAll('main > div').forEach(e => e.classList.add('hidden'));
+                document.getElementById('view-'+v).classList.remove('hidden');
+                document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+                // Highlight logic (simplified)
             }
         };
     </script>
